@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# Copyright (c) 2020 SiFive Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+"""Generate Freedom E SDK settings.mk from devicetree source files"""
+
+import argparse
+import sys
+
+import pydevicetree
+
+SUPPORTED_TYPES = ["rtl", "arty", "qemu", "hifive", "spike"]
+
+
+def parse_arguments(argv):
+    """Parse the arguments into a dictionary with argparse"""
+    arg_parser = argparse.ArgumentParser(
+        description="Generate Freedom E SDK settings.mk from Devicetrees")
+
+    arg_parser.add_argument("-t", "--type", required=True,
+                            help="The type of the target to generate settings.mk for. \
+                                Supported types include: %s" % ", ".join(SUPPORTED_TYPES))
+    arg_parser.add_argument("-d", "--dts", required=True,
+                            help="The path to the Devicetree for the target")
+    arg_parser.add_argument("-o", "--output",
+                            type=argparse.FileType('w'),
+                            help="The path of the settings.mk file to output")
+
+    parsed_args = arg_parser.parse_args(argv)
+
+    if not any([t in parsed_args.type for t in SUPPORTED_TYPES]):
+        print("Type '%s' is not supported, please choose one of: %s" % (parsed_args.type,
+                                                                        ', '.join(SUPPORTED_TYPES)))
+        sys.exit(1)
+
+    return parsed_args
+
+
+def get_boot_hart(tree):
+    """Get the boot hart if one is specified, otherwise just gets the first hart"""
+    metal_boothart = tree.chosen("metal,boothart")
+    if metal_boothart:
+        return tree.get_by_reference(metal_boothart[0])
+    return tree.get_by_path("/cpus").children[0]
+
+
+def arch2arch(arch):
+    """Remap certain arch strings which are known to not be supportable"""
+    # pylint: disable=too-many-return-statements
+    if arch == "rv32ea":
+        return "rv32e"
+    if arch in ["rv32ema", "rv32emc"]:
+        return "rv32em"
+
+    if arch == "rv32ia":
+        return "rv32i"
+    if arch == "rv32ima":
+        return "rv32im"
+
+    if arch == "rv64ia":
+        return "rv64i"
+    if arch == "rv64ima":
+        return "rv64im"
+
+    return arch
+
+
+def arch2abi(arch):
+    """Map arch to abi"""
+    # pylint: disable=too-many-return-statements
+    if "rv32e" in arch:
+        if "d" in arch:
+            return "ilp32ed"
+        if "f" in arch:
+            return "ilp32ef"
+        return "ilp32e"
+    if "rv32i" in arch:
+        if "d" in arch:
+            return "ilp32d"
+        if "f" in arch:
+            return "ilp32f"
+        return "ilp32"
+    if "rv64i" in arch:
+        if "d" in arch:
+            return "lp64d"
+        if "f" in arch:
+            return "lp64f"
+        return "lp64"
+
+    raise Exception("Unknown arch %s" % arch)
+
+
+
+def main(argv):
+    """Parse arguments, extract data, and render the settings.mk to file"""
+    # pylint: disable=too-many-locals,too-many-branches
+    parsed_args = parse_arguments(argv)
+
+    tree = pydevicetree.Devicetree.parseFile(parsed_args.dts, followIncludes=True)
+
+    boot_hart = get_boot_hart(tree)
+
+    arch = arch2arch(boot_hart.get_field("riscv,isa"))
+    bitness = 32 if "32" in arch else 64
+    abi = arch2abi(arch)
+    codemodel = "medlow" if bitness == 32 else "medany"
+
+    hart_compat = boot_hart.get_field("compatible")
+    if "bullet" in hart_compat:
+        series = "sifive-7-series"
+    elif "caboose" in hart_compat:
+        series = "sifive-2-series"
+    elif "rocket" in hart_compat:
+        series = "sifive-3-series" if bitness == 32 else "sifive-5-series"
+
+    metal_entry = tree.chosen("metal,entry")
+    if metal_entry:
+        entry_node = tree.get_by_reference(metal_entry[0])
+        port_width_bytes = entry_node.parent.get_field("sifive,port-width-bytes")
+        if port_width_bytes is not None:
+            port_width = 8 * port_width_bytes
+        else:
+            port_width = None
+
+    if "arty" in parsed_args.type or "vc707" in parsed_args.type:
+        tags = "fpga openocd"
+    elif "hifive1-revb" in parsed_args.type:
+        tags = "board jlink"
+    elif "rtl" in parsed_args.type:
+        tags = "rtl"
+    elif "spike" in parsed_args.type:
+        tags = "spike"
+    elif "qemu" in parsed_args.type:
+        tags = "qemu"
+    else:
+        tags = "board openocd"
+
+    if "rtl" in parsed_args.type:
+        dhry_iters = 2000
+        core_iters = 5
+    else:
+        dhry_iters = 20000000
+        core_iters = 5000
+
+    settings = """
+    # Copyright (C) 2020 SiFive Inc
+    # SPDX-License-Identifier: Apache-2.0
+    
+    RISCV_ARCH = %s
+    RISCV_ABI = %s
+    RISCV_CMODEL = %s
+    RISCV_SERIES = %s
+
+    TARGET_TAGS = %s
+    TARGET_DHRY_ITERS = %d
+    TARGET_CORE_ITERS = %d
+    """ % (arch, abi, codemodel, series, tags, dhry_iters, core_iters)
+
+    if port_width is not None:
+        settings += "\n\nCOREIP_MEM_WIDTH = %d" % port_width
+
+    if parsed_args.output:
+        parsed_args.output.write(settings)
+        parsed_args.output.close()
+    else:
+        print(settings)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
