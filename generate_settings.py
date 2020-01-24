@@ -90,10 +90,51 @@ def arch2abi(arch):
     raise Exception("Unknown arch %s" % arch)
 
 
+def type2tag(target_type):
+    """Given the target type, return the list of TARGET_TAGS to parameterize Freedom E SDK"""
+    if "arty" in target_type or "vc707" in target_type:
+        tags = "fpga openocd"
+    elif "hifive1-revb" in target_type:
+        tags = "board jlink"
+    elif "rtl" in target_type:
+        tags = "rtl"
+    elif "spike" in target_type:
+        tags = "spike"
+    elif "qemu" in target_type:
+        tags = "qemu"
+    else:
+        tags = "board openocd"
+    return tags
+
+
+def get_port_width(tree):
+    """Get the width of the RTL port, if the entry node specifies it"""
+    metal_entry = tree.chosen("metal,entry")
+    port_width = None
+    if metal_entry:
+        entry_node = tree.get_by_reference(metal_entry[0])
+        port_width_bytes = entry_node.parent.get_field("sifive,port-width-bytes")
+        if port_width_bytes is not None:
+            port_width = 8 * port_width_bytes
+    return port_width
+
+
+def get_series(boot_hart, bitness):
+    """Given the boot hart and the bitness, get the SiFive core series name"""
+    hart_compat = boot_hart.get_field("compatible")
+    series = None
+    if "bullet" in hart_compat:
+        series = "sifive-7-series"
+    elif "caboose" in hart_compat:
+        series = "sifive-2-series"
+    elif "rocket" in hart_compat:
+        series = "sifive-3-series" if bitness == 32 else "sifive-5-series"
+    return series
+
 
 def main(argv):
     """Parse arguments, extract data, and render the settings.mk to file"""
-    # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-locals
     parsed_args = parse_arguments(argv)
 
     tree = pydevicetree.Devicetree.parseFile(parsed_args.dts, followIncludes=True)
@@ -105,35 +146,9 @@ def main(argv):
     abi = arch2abi(arch)
     codemodel = "medlow" if bitness == 32 else "medany"
 
-    hart_compat = boot_hart.get_field("compatible")
-    if "bullet" in hart_compat:
-        series = "sifive-7-series"
-    elif "caboose" in hart_compat:
-        series = "sifive-2-series"
-    elif "rocket" in hart_compat:
-        series = "sifive-3-series" if bitness == 32 else "sifive-5-series"
+    series = get_series(boot_hart, bitness)
 
-    metal_entry = tree.chosen("metal,entry")
-    if metal_entry:
-        entry_node = tree.get_by_reference(metal_entry[0])
-        port_width_bytes = entry_node.parent.get_field("sifive,port-width-bytes")
-        if port_width_bytes is not None:
-            port_width = 8 * port_width_bytes
-        else:
-            port_width = None
-
-    if "arty" in parsed_args.type or "vc707" in parsed_args.type:
-        tags = "fpga openocd"
-    elif "hifive1-revb" in parsed_args.type:
-        tags = "board jlink"
-    elif "rtl" in parsed_args.type:
-        tags = "rtl"
-    elif "spike" in parsed_args.type:
-        tags = "spike"
-    elif "qemu" in parsed_args.type:
-        tags = "qemu"
-    else:
-        tags = "board openocd"
+    tags = type2tag(parsed_args.type)
 
     if "rtl" in parsed_args.type:
         dhry_iters = 2000
@@ -156,6 +171,7 @@ def main(argv):
     TARGET_CORE_ITERS = %d
     """ % (arch, abi, codemodel, series, tags, dhry_iters, core_iters)
 
+    port_width = get_port_width(tree)
     if port_width is not None:
         settings += "\n\nCOREIP_MEM_WIDTH = %d" % port_width
 
