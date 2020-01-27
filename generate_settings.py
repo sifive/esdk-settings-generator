@@ -113,7 +113,8 @@ def get_port_width(tree):
     port_width = None
     if metal_entry:
         entry_node = tree.get_by_reference(metal_entry[0])
-        port_width_bytes = entry_node.parent.get_field("sifive,port-width-bytes")
+        port_width_bytes = entry_node.parent.get_field(
+            "sifive,port-width-bytes")
         if port_width_bytes is not None:
             port_width = 8 * port_width_bytes
     return port_width
@@ -137,7 +138,8 @@ def main(argv):
     # pylint: disable=too-many-locals
     parsed_args = parse_arguments(argv)
 
-    tree = pydevicetree.Devicetree.parseFile(parsed_args.dts, followIncludes=True)
+    tree = pydevicetree.Devicetree.parseFile(
+        parsed_args.dts, followIncludes=True)
 
     boot_hart = get_boot_hart(tree)
 
@@ -157,19 +159,17 @@ def main(argv):
         dhry_iters = 20000000
         core_iters = 5000
 
-    settings = """
-    # Copyright (C) 2020 SiFive Inc
-    # SPDX-License-Identifier: Apache-2.0
-    
-    RISCV_ARCH = %s
-    RISCV_ABI = %s
-    RISCV_CMODEL = %s
-    RISCV_SERIES = %s
+    settings = """# Copyright (C) 2020 SiFive Inc
+# SPDX-License-Identifier: Apache-2.0
 
-    TARGET_TAGS = %s
-    TARGET_DHRY_ITERS = %d
-    TARGET_CORE_ITERS = %d
-    """ % (arch, abi, codemodel, series, tags, dhry_iters, core_iters)
+RISCV_ARCH = %s
+RISCV_ABI = %s
+RISCV_CMODEL = %s
+RISCV_SERIES = %s
+
+TARGET_TAGS = %s
+TARGET_DHRY_ITERS = %d
+TARGET_CORE_ITERS = %d""" % (arch, abi, codemodel, series, tags, dhry_iters, core_iters)
 
     port_width = get_port_width(tree)
     if port_width is not None:
