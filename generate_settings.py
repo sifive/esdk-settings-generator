@@ -113,10 +113,21 @@ def get_port_width(tree):
     port_width = None
     if metal_entry:
         entry_node = tree.get_by_reference(metal_entry[0])
+
+        # If the entry node is a testram, the parent node
+        # is the port and has the port width
         port_width_bytes = entry_node.parent.get_field(
             "sifive,port-width-bytes")
+
+        # If the entry node is /memory, the node itself
+        # has the port width
+        if port_width_bytes is None:
+            port_width_bytes = entry_node.get_field(
+                "sifive,port-width-bytes")
+
         if port_width_bytes is not None:
             port_width = 8 * port_width_bytes
+
     return port_width
 
 
