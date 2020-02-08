@@ -9,7 +9,7 @@ import sys
 
 import pydevicetree
 
-SUPPORTED_TYPES = ["rtl", "arty", "qemu", "hifive", "spike"]
+SUPPORTED_TYPES = ["rtl", "arty", "qemu", "hifive", "spike", "vc707"]
 
 
 def parse_arguments(argv):
