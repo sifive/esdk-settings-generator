@@ -59,3 +59,46 @@ global def runESDKSettingsGenerator options =
 # This allows the python virtualenv to be created prior to running a build
 # with `wake preinstall Unit`.
 publish preinstall = (pythonRequirementsInstaller generatorDir), Nil
+
+global def esdkSettingsGeneratorBuildTarget =
+  baseBuildTargetPlan "esdk-settings-generator"
+  | dependsOnFn "topDTSFile" (_)
+  | dependsOnFn "otherDTSFiles" jNestedArrayMap
+  | dependsOn "type" jString
+  | dependsOn "outputFile" jString
+  | definedAs (
+    \topDTSFile
+    \otherDTSFiles
+    \type
+    \outputFile
+    \_ (
+      def attributes =
+        makeESDKSettingsGeneratorOptions topDTSFile otherDTSFiles type outputFile
+        | runESDKSettingsGenerator
+        | getJobOutput
+
+      def rlines = read attributes | rmap `\n`.tokenize
+      match rlines
+        Pass lines =
+          def getAttribute attribute =
+            def regex = regExpCat (`^`, attribute, ` = (.*)$`, Nil)
+            lines
+            | map regex.extract
+            | flatten
+            | head
+          match `RISCV_ABI`.getAttribute `RISCV_ARCH`.getAttribute `RISCV_CMODEL`.getAttribute
+            (Some mabi) (Some march) (Some cmodel) = Pass (
+              "output" → bPath attributes,
+              "abi" → bJValue (JString mabi),
+              "arch" → bJValue (JString mabi),
+              "CMODEL" → bJValue (JString cmodel),
+              Nil
+            )
+            _ _ _ = Fail "Generated make attributes file not formatted correctly: {attributes.getPathName}".makeError
+        Fail fail = Fail fail
+    )
+  )
+  | exports bObject
+  | makeBuildTarget
+
+publish buildTargets = esdkSettingsGeneratorBuildTarget, Nil
