@@ -90,8 +90,8 @@ global def esdkSettingsGeneratorBuildTarget =
             (Some mabi) (Some march) (Some cmodel) = Pass (
               "output" → bPath attributes,
               "abi" → bJValue (JString mabi),
-              "arch" → bJValue (JString mabi),
-              "CMODEL" → bJValue (JString cmodel),
+              "arch" → bJValue (JString march),
+              "cmodel" → bJValue (JString cmodel),
               Nil
             )
             _ _ _ = Fail "Generated make attributes file not formatted correctly: {attributes.getPathName}".makeError
