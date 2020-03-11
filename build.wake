@@ -21,8 +21,8 @@ def generatorDir = here
 #   - outputFile: A string representing the path of the output file to
 #                 produce
 #######################################################################
-global def makeESDKSettingsGeneratorOptions topDTSFile otherDTSFiles type outputFile =
-  ESDKSettingsGeneratorOptions topDTSFile otherDTSFiles type outputFile
+global def makeESDKSettingsGeneratorOptions topDTSFile otherDTSFiles type_ outputFile =
+  ESDKSettingsGeneratorOptions topDTSFile otherDTSFiles type_ outputFile
 
 global def runESDKSettingsGenerator options =
   def topDTSFile = options.getESDKSettingsGeneratorOptionsTopDTSFile
@@ -40,7 +40,7 @@ global def runESDKSettingsGenerator options =
       "-o", options.getESDKSettingsGeneratorOptionsOutputFile,
       Nil
 
-    def type =
+    def type_ =
       "-t", options.getESDKSettingsGeneratorOptionsType,
       Nil
 
@@ -48,7 +48,7 @@ global def runESDKSettingsGenerator options =
       "-d", topDTSFile.getPathName,
       Nil
 
-    output ++ type ++ dts
+    output ++ type_ ++ dts
 
   makePlan (pythonCommand "{generatorDir}/generate_settings.py" args) inputs
   | addPlanRelativePath "PYTHONPATH" generatorDir
