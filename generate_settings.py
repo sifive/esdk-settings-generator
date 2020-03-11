@@ -166,9 +166,11 @@ def main(argv):
     if "rtl" in parsed_args.type:
         dhry_iters = 2000
         core_iters = 5
+        freertos_wait_ms = 10
     else:
         dhry_iters = 20000000
         core_iters = 5000
+        freertos_wait_ms = 1000
 
     settings = """# Copyright (C) 2020 SiFive Inc
 # SPDX-License-Identifier: Apache-2.0
@@ -180,7 +182,9 @@ RISCV_SERIES = %s
 
 TARGET_TAGS = %s
 TARGET_DHRY_ITERS = %d
-TARGET_CORE_ITERS = %d""" % (arch, abi, codemodel, series, tags, dhry_iters, core_iters)
+TARGET_CORE_ITERS = %d
+TARGET_FREERTOS_WAIT_MS = %d""" %  (arch, abi, codemodel, series, tags, dhry_iters, core_iters,
+                                    freertos_wait_ms)
 
     port_width = get_port_width(tree)
     if port_width is not None:
