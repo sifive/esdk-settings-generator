@@ -44,6 +44,37 @@ def get_boot_hart(tree):
     return tree.get_by_path("/cpus").children[0]
 
 
+def get_all_arch(tree):
+    """Get a list of architecture strings from all harts"""
+    return [cpu.get_field("riscv,isa") for cpu in tree.get_by_path("/cpus").children]
+
+def get_greatest_common_arch(archs):
+    """Get the RISC-V ISA string which contains as many extensions as are supported
+       by all harts in the design"""
+    if len(archs) == 1:
+        return archs[0]
+
+    # Get all ISA extensions implemented by any hart
+    extensions = ''.join(set(''.join([arch[4:] for arch in archs])))
+
+    # Get a list of any extensions which aren't supported by all harts
+    disallowed_extensions = ""
+    for extension in extensions:
+        if not all([extension in arch[4:] for arch in archs]):
+            disallowed_extensions += extension
+
+    # Get the longest arch from the list
+    arch = max(archs, key=len)
+
+    # Filter out any disallowed extensions
+    for extension in disallowed_extensions:
+        base = arch[:4]
+        extensions = arch[4:].replace(extension, "")
+        arch = base + extensions
+
+    return arch
+
+
 def arch2arch(arch):
     """Remap certain arch strings which are known to not be supportable"""
     # pylint: disable=too-many-return-statements
@@ -154,7 +185,8 @@ def main(argv):
 
     boot_hart = get_boot_hart(tree)
 
-    arch = arch2arch(boot_hart.get_field("riscv,isa"))
+    archs = get_all_arch(tree)
+    arch = arch2arch(get_greatest_common_arch(archs))
     bitness = 32 if "32" in arch else 64
     abi = arch2abi(arch)
     codemodel = "medlow" if bitness == 32 else "medany"
