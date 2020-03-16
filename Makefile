@@ -22,5 +22,14 @@ test-lint: virtualenv
 .PHONY: test
 test: test-lint
 
+UNIT_TESTS = tests/test-arch.py
+
+.PHONY: test-unit
+test-unit: virtualenv
+	. venv/bin/activate && python -m unittest $(UNIT_TESTS)
+
+.PHONY: test
+test: test-unit
+
 clean:
 	-rm -rf venv __pycache__
