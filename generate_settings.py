@@ -126,7 +126,7 @@ def type2tag(target_type):
     if "arty" in target_type or "vc707" in target_type or "vcu118" in target_type:
         tags = "fpga openocd"
     elif "hifive1-revb" in target_type:
-        tags = "board jlink"
+        tags = "board jlink openocd"
     elif "rtl" in target_type:
         tags = "rtl"
     elif "spike" in target_type:
