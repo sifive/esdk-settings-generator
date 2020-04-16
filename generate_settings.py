@@ -123,8 +123,12 @@ def arch2abi(arch):
 
 def type2tag(target_type):
     """Given the target type, return the list of TARGET_TAGS to parameterize Freedom E SDK"""
-    if "arty" in target_type or "vc707" in target_type or "vcu118" in target_type:
-        tags = "fpga openocd"
+    if "arty" in target_type:
+        tags = "fpga openocd arty"
+    if "vc707" in target_type:
+        tags = "fpga openocd vc707"
+    if "vcu118" in target_type:
+        tags = "fpga openocd vcu118"
     elif "hifive1-revb" in target_type:
         tags = "board jlink"
     elif "rtl" in target_type:
