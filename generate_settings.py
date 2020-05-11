@@ -198,7 +198,9 @@ def main(argv):
     codemodel = "medlow" if bitness == 32 else "medany"
 
     series = get_series(boot_hart, bitness)
-    intr_wait_cycle = 5000 if "8" in series else 0
+    intr_wait_cycle = 0
+    if series is not None:
+        intr_wait_cycle = 5000 if "8" in series else 0
 
     tags = type2tag(parsed_args.type)
 
@@ -224,7 +226,7 @@ TARGET_DHRY_ITERS = %d
 TARGET_CORE_ITERS = %d
 TARGET_FREERTOS_WAIT_MS = %d
 TARGET_INTR_WAIT_CYCLE  = %d""" %  (arch, abi, codemodel, series, tags, dhry_iters, core_iters,
-                                   freertos_wait_ms, intr_wait_cycle)
+                                    freertos_wait_ms, intr_wait_cycle)
 
     port_width = get_port_width(tree)
     if port_width is not None:
