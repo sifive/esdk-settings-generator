@@ -9,7 +9,7 @@ OUTPUT_PATH="build/esdk-settings-generator/settings.mk"
 
 wake --init .
 
-wake -v "runESDKSettingsGenerator (makeESDKSettingsGeneratorOptions (source \"${SPIKE_DTS_DIR}/design.dts\") (sources \"${SPIKE_DTS_DIR}\" \`core.dts\`) \"spike\" \"${OUTPUT_PATH}\")"
+wake -v -x "runESDKSettingsGenerator (makeESDKSettingsGeneratorOptions (source \"${SPIKE_DTS_DIR}/design.dts\") (sources \"${SPIKE_DTS_DIR}\" \`core.dts\`) \"spike\" \"${OUTPUT_PATH}\")"
 
 >&2 echo "$0: Checking for ${OUTPUT_PATH}"
 if [ ! -f ${OUTPUT_PATH} ] ; then
