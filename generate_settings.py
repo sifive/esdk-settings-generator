@@ -92,6 +92,9 @@ def arch2arch(arch):
         return "rv64i"
     if arch == "rv64ima":
         return "rv64im"
+    # Handle here until DTS correctly generating *_zfh
+    if arch == "rv64imafdcv":
+        return "rv64imafdcv_zfh"
 
     return arch
 
