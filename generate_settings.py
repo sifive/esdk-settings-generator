@@ -92,6 +92,8 @@ def arch2arch(arch):
         return "rv64i"
     if arch == "rv64ima":
         return "rv64im"
+    if arch == "rv64imafdcv":
+        return "rv64imafdcv_zfh"
 
     return arch
 
