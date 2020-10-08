@@ -77,6 +77,9 @@ global target installESDKSettingsGenerator installPath =
     source "{here}/LICENSE",
     source "{here}/generate_settings.py",
     Nil
-
+  def installWithStructure dir file =
+    def oneDown = simplify "{here}/.."
+    def into = "{dir}/{relative oneDown file.getPathName}"
+    installAs into file
   mkdir installPath,
-  map (installIn installPath) generatorSources
+  map (installWithStructure installPath) generatorSources
