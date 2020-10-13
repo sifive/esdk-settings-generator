@@ -203,7 +203,11 @@ def main(argv):
     series = get_series(boot_hart, bitness)
     intr_wait_cycle = 0
     if series is not None:
-        intr_wait_cycle = 5000 if "8" in series else 0
+        if "8" in series:
+            intr_wait_cycle = 5000
+        elif len(tree.get_by_path("/cpus").children) > 1:
+            # Multicore configs have increased latency on interrupt delivery.
+            intr_wait_cycle = 5000
 
     tags = type2tag(parsed_args.type)
 
