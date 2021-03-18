@@ -96,6 +96,10 @@ def arch2arch(arch):
     if arch == "rv64imafdcv":
         return "rv64imafdcv_zfh"
 
+    # Ignore new ISA extensions for the moment (TODO: this is technical debt)
+    if arch in ["rv64imafdcv_zba_zbb_zfh_xsfvqmaccdod", "rv64imafdcv_zba_zbb_zfh_xsfvqmaccqoq"]:
+        return "rv64imafdcv_zfh"
+
     return arch
 
 
