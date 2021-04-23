@@ -96,7 +96,7 @@ def arch2arch(arch):
     if arch == "rv64imafdcv":
         return "rv64imafdcv_zfh"
 
-    if arch in ["rv64imafdcv_zba_zbb_zfh_xsfvqmaccdod_xsfvfhbfmin",
+    if arch in ["rv64imafdcv_zba_zbb_zfh_xsfvqmaccdod",
                 "rv64imafdcv_zba_zbb_zfh_xsfvqmaccqoq_xsfvfhbfmin"]:
         return "rv64imafdcv_zba_zbb_zfh"
 
