@@ -80,7 +80,7 @@ def arch2arch(arch):
     # pylint: disable=too-many-return-statements
     if arch == "rv32ea":
         return "rv32e"
-    if arch in ["rv32ema", "rv32emc"]:
+    if arch in ["rv32ema"]:
         return "rv32em"
 
     if arch == "rv32ia":
