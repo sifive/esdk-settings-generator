@@ -213,6 +213,9 @@ def main(argv):
         core_iters = 5000
         freertos_wait_ms = 1000
 
+    if "unmatched" in parsed_args.type:
+        core_iters = 110000
+
     settings = """# Copyright (C) 2020 SiFive Inc
 # SPDX-License-Identifier: Apache-2.0
 
