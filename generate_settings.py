@@ -98,6 +98,7 @@ def arch2arch(arch):
 
 def arch2abi(arch):
     """Map arch to abi"""
+    arch = arch.split("_")[0]
     # pylint: disable=too-many-return-statements
     if "rv32e" in arch:
         if "d" in arch:
